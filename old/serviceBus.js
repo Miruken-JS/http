@@ -1,43 +1,24 @@
-﻿import {
-    StrictProtocol, Base, Resolving, Policy, design, 
-} from "miruken-core";
+﻿import { Base, StrictProtocol } from "../src/xhr/miruken-core";
 
 import {
-    Handler, Batching, handles, $composer
-} from "miruken-callback";
+    Handler, Batching, Options, handles,
+    $composer, Mapper, JsonFormat, ignore,
+    registerType
+} from "../src/xhr/miruken-callback";
 
-import {
-    Mapper, JsonFormat, ignore, TypeFormat, registerType, 
-} from "miruken-map";
-
-import { ErrorFormat } from "./errorMapping";
-import { idEntry } from "./mappings";
+import { ErrorFormat } from "../src/http-error-mapping";
 
 //import { post } from "axios";
-const axios = require('axios').default;
+export const axios = require('axios').default;
 
 export const dynamic = Object.freeze({ dynamic: true });
 
 export const Result = Base.extend(registerType);
 
-export const Data = Base.extend({
-}, {
+export const Data = Base.extend({}, {
     coerce(initial) {
         return Reflect.construct(this, arguments);
     }
-});
-
-export const Key = Data.extend({
-    id:      undefined,
-    orderBy: undefined,
-    name:    undefined
-});
-Key.prototype.valueOf = function () { return this.id; };
-
-export const KeysResult = Result.extend({
-    $type: "SixFlags.MediatR.KeysResult`1[[System.Int32, mscorlib]], SixFlags.MediatR",
-    @design(Key)
-    keys:  undefined
 });
 
 export const Request = Base.extend({
@@ -94,7 +75,7 @@ export const InputValidationResult = Result.extend({
 export const AnonymousRequest = Request.extend();
 
 export const Cached = Request.extend({
-    $type:      "SixFlags.MediatR.Cache.Cached`1[[%1]], SixFlags.MediatR",
+    $type:      "Miruken.Api.Cache.Cached`1[[%1]], Miruken",
     request:    undefined,
     timeToLive: "1:00:00",
 
@@ -123,7 +104,7 @@ Request.implement({
 });
 
 export const Scheduled = Request.extend({
-    $type: "Miruken.Mediate.Scheduled.Parallel,Miruken.Mediate",
+    $type: "Miruken.Api.Schedule.Scheduled, Miruken",
     requests: undefined,
     constructor(requests) {
         this.requests = requests || [];
@@ -143,19 +124,15 @@ export const Scheduled = Request.extend({
 });
 
 export const Concurrent = Scheduled.extend({
-    $type: "Miruken.Mediate.Schedule.Concurrent,Miruken.Mediate"
+    $type: "Miruken.Api.Schedule.Concurrent, Miruken"
 });
 
 export const Parallel = Scheduled.extend({
-    $type: "Miruken.Mediate.Schedule.Parallel,Miruken.Mediate"
+    $type: "Miruken.Api.Schedule.Parallel, Miruken"
 });
 
 export const Sequential = Scheduled.extend({
-    $type: "Miruken.Mediate.Schedule.Sequential,Miruken.Mediate"
-});
-
-const ConcurrentLegacy = Scheduled.extend({
-    $type: "SixFlags.MediatR.Concurrency.Concurrent,SixFlags.MediatR"
+    $type: "Miruken.Api.Schedule.Sequential, Miruken"
 });
 
 export const Try = Request.extend({
@@ -185,7 +162,7 @@ export const Try = Request.extend({
     }
 });
 
-export const RoutePolicy = Policy.extend({
+export const RoutePolicy = Options.extend({
     baseUrl:   undefined,
     timeout:   undefined,
     scheduler: undefined
@@ -220,7 +197,7 @@ Handler.implement({
     }
 });
 
-export const ServiceBus = StrictProtocol.extend(Resolving, {
+export const ServiceBus = StrictProtocol.extend({
     process(request) { }
 });
 
@@ -231,10 +208,10 @@ export const ServiceBusHandler = Handler.extend(ServiceBus, {
                 if (!(request instanceof Request)) {
                     request = new AnonymousRequest(request);
                 }
-                const batcher = $composer.getBatcher(ServiceBus);
-                if (batcher) {
-                    const batch = this.createBatch(batcher);
-                    batcher.addHandlers(batch);
+                const batch = $composer.getBatch(ServiceBus);
+                if (batch) {
+                    const batch = this.createBatch(batch);
+                    batch.addHandlers(batch);
                     return batch.process(request);
                 }
                 const route    = new RoutePolicy(),
@@ -251,7 +228,7 @@ export const ServiceBusHandler = Handler.extend(ServiceBus, {
                 const composer = $composer,
                       json     = Mapper(composer).mapFrom(request, JsonFormat);
 
-                return post(`${baseUrl}${path}`, { payload: json }, config)
+                return axios.post(`${baseUrl}${path}`, { payload: json }, config)
                     .then(response => {
                         const data = response.data;
                         return data && request.mapResponse(data.payload, composer);
@@ -266,7 +243,7 @@ export const ServiceBusHandler = Handler.extend(ServiceBus, {
 
                         if (payload && payload.$type) {
                             const mapper  = Mapper(composer),
-                                  type    = mapper.mapTo(payload.$type, TypeFormat),
+                                  type    = composer.getTypeFromId(payload.$type),
                                   details = type && mapper.mapTo(payload, JsonFormat, type, dynamic),
                                   error   = details && mapper.mapTo(details, ErrorFormat);
                           
@@ -280,60 +257,14 @@ export const ServiceBusHandler = Handler.extend(ServiceBus, {
     }
 });
 
-export const ServiceBusBatch = Base.extend(ServiceBus, Batching, {
-    constructor() {
-        const _groups = new Map();
-        this.extend({
-            process(request) {
-                const route  = new RoutePolicy(),
-                    hasRoute = $composer.handle(route, true),
-                    baseUrl  = route.baseUrl;
-                let group = _groups.get(baseUrl);
-                if (!group) {
-                    _groups.set(baseUrl, group = {
-                        requests: [],
-                        responses: [],
-                        promises: []
-                    });
-                }
-                group.requests.push(request);
-                let rejectPromise = Undefined;
-                const promise = new Promise((resolve, reject) => {
-                    group.responses.push(resolve);
-                    rejectPromise = reject;
-                });
-                extend(promise, "reject", rejectPromise);
-                group.promises.push(promise);
-                return promise;
-            },
-            complete(composer) {
-                const bus = ServiceBus(composer);
-                return Promise.all([..._groups].map(([url, group]) =>
-                    group.requests.length === 1
-                        ? bus.process(group.requests[0]).then(resp => {
-                            group.responses[0](resp);
-                            return [url, [resp]];
-                        })
-                        : bus.process(ConcurrentLegacy(group.requests)).then(resp => {
-                            for (let i = 0; i < resp.length; ++i) {
-                                group.responses[i](resp[i]);
-                            }
-                            return Promise.all(group.promises).then(() => [url, resp]);
-                        })
-                ));
-            }
-        });
-    }
-});
-
 export const HttpRouteBatch = Base.extend(ServiceBus, Batching, {
     constructor() {
         const _groups = new Map();
         this.extend({
             process(request) {
-                const route  = new RoutePolicy(),
-                    hasRoute = $composer.handle(route, true),
-                    baseUrl  = route.baseUrl;
+                const route    = new RoutePolicy(),
+                      hasRoute = $composer.handle(route, true),
+                      baseUrl  = route.baseUrl;
                 let group = _groups.get(baseUrl);
                 if (!group) {
                     _groups.set(baseUrl, group = new Map());
@@ -348,18 +279,18 @@ export const HttpRouteBatch = Base.extend(ServiceBus, Batching, {
                 return scheduledRequest.promise;
             },
             complete(composer) {
-                const bus = ServiceBus(composer),
-                    schedules = [..._groups].map(([url, group]) =>
+                const bus       = ServiceBus(composer),
+                      schedules = [..._groups].map(([url, group]) =>
                         this.schedule(url, group, bus));
                 return schedules.length === 1 ? schedules[0]
                     : Promise.all(schedules);
             },
             schedule(url, group, bus) {
                 const schedules = [...group.values()],
-                    scheduled = schedules.map(_normalize),
-                    request = scheduled.length > 1
-                        ? new Concurrent(scheduled)
-                        : scheduled[0];
+                      scheduled = schedules.map(_normalize),
+                      request   = scheduled.length > 1
+                                ? new Concurrent(scheduled)
+                                : scheduled[0];
                 return bus.process(request)
                     .then(responses => [url, responses]);
             }
@@ -367,15 +298,14 @@ export const HttpRouteBatch = Base.extend(ServiceBus, Batching, {
     }
 });
 
-function _normalize(request) {
-    return request instanceof Scheduled &&
-        request.requests.length > 1
-        ? Try(request) : request.requests[0];
-}
-
 ServiceBusHandler.implement({
-    createBatch(batcher) {
+    createBatch(batch) {
         return new HttpRouteBatch();
     }
 });
 
+function _normalize(request) {
+    return request instanceof Scheduled &&
+        request.requests.length > 1
+        	? Try(request) : request.requests[0];
+}

@@ -1,4 +1,3 @@
-var isparta = require('isparta');
 var paths = require('./build/paths');
 
 module.exports = function(config) {
@@ -21,7 +20,7 @@ module.exports = function(config) {
         babelPreprocessor: {
             options: {
                 "presets": [
-                    ["env", {
+                    ["@babel/preset-env", {
                         "targets": {
                             "browsers": [ "last 2 Chrome versions" ]
                         }
@@ -30,31 +29,8 @@ module.exports = function(config) {
             }
         },
 
-        reporters: ['coverage', 'progress'],
-        
-        coverageReporter: {
-            instrumenters: {
-                isparta: isparta
-            },
-            
-            instrumenter: {
-                [paths.source]: 'isparta'
-            },
-            
-            dir: 'build/reports/coverage/',
-            
-            reporters: [{
-                type: 'text-summary'
-            }, {
-                type: 'html',
-                subdir: 'html'
-            }, {
-                type: 'lcovonly',
-                subdir: 'lcov',
-                file: 'report-lcovonly.txt'
-            }]
-        },
-        
+        reporters: ['progress'],
+                
         port: 9876,
         
         colors: true,

@@ -1,6 +1,6 @@
-﻿import { Base } from "miruken-core";
+﻿import { Base } from "../src/xhr/miruken-core";
 import { ignore } from "miruken-map";
-import { Request } from "./servicebus";
+import { Request } from "./serviceBus";
 
 export const Resource = Base.extend({
     id:         undefined,
