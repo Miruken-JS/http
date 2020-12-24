@@ -17,9 +17,8 @@ export class ResourceRequest extends ResourceWrapper {
     baseAddress;
     resourceUri;
     responseType;
-    contenType;
+    contentType;
     headers;
-    timeout;
 
     getCacheKey() {
         const resource    = this.resource,

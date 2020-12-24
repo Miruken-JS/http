@@ -14,15 +14,14 @@ import { TypeHelper } from "../type-helper";
 export class XMLHttpRequestHandler extends HttpHandler {
     sendRequest(verb, url, request, response, options, composer) {
         const xhr = new XMLHttpRequest(),
-            { resource, responseType, contentType, headers } = request;
+            { resource, responseType, contentType, headers } = request,
+            { timeout, withCredentials } = options || {};
 
+        xhr.timeout         = timeout;
+        xhr.withCredentials = withCredentials;
         xhr.open(verb, url.href);
+        
         setResponseType(xhr, responseType);
-
-        xhr.timeout = request.timeout;
-        if ($isNothing(xhr.timeout)) {
-            xhr.timeout = options?.timeout;
-        }
 
         const promise = new Promise((resolve, reject) => {
             xhr.onload = () => {
@@ -31,28 +30,27 @@ export class XMLHttpRequestHandler extends HttpHandler {
                         content     = getResponse(xhr, contentType);
                 if (status >= 200 && status < 300) {
                     if (!($isNothing(content) || $isNothing(contentType) ||
-                          $isNothing(responseType) || xhr.responseType !== "")) {
-                        response.resource = composer.mapTo(
-                            content, contentType, responseType, 
-                                x => x.strategy = options.mapping);
+                          xhr.responseType !== "")) {
+                        response.resource = composer.$mapTo(
+                            content, contentType, responseType);
                     } else {
                         response.resource = content;
                     }
-                    response.headers     = createResponseHeadersMap(xhr);
+                    response.headers     = createResponseHeaders(xhr);
                     response.resourceUri = xhr.responseURL;
                     resolve(response);
                 } else {
                     const error = new HttpError(status, statusText);
                     if (!($isNothing(content) || $isNothing(contentType))) {
-                        error.content = composer.$bestEffort().mapFrom(
-                            content, contentType, x => x.strategy = options.mapping);
+                        error.content = composer.$bestEffort()
+                            .$mapTo(content, contentType) || content;
                     }
                     reject(error);
                 }
             };
 
             xhr.onerror = () => {
-                reject(new HttpError(request, "A network-level error occurred during an XMLHttpRequest."));
+                reject(new Error("A network-level error occurred during an XMLHttpRequest."));
             }
 
             xhr.ontimeout = () => {
@@ -68,19 +66,18 @@ export class XMLHttpRequestHandler extends HttpHandler {
         if (!$isNothing(resource)) {
             body = getBody(resource, false);
             if ($isNothing(body) && $isObject(resource)) {
-                const content = composer.mapFrom(resource, contentType,
-                    x => x.strategy = options.mapping);
+                const content = composer.$mapFrom(resource, contentType);
                 body = getBody(content, true);
             }
             if ($isNothing(body)) {
-                return Promise.reject(request, new HttpError("Unsupported http content."));
+                return Promise.reject(request, new Error("Unsupported http content."));
             }
         }
 
         if (!$isNothing(headers)) {
-            for (const [header, value] of headers) {
-                xhr.setRequestHeader(header, value);
-            }
+            Reflect.ownKeys(headers).forEach(header =>
+                xhr.setRequestHeader(header, headers[header])
+            );
         }
 
         xhr.send(body);
@@ -127,18 +124,18 @@ function getResponse(xhr, contentType) {
     }
 }
 
-function createResponseHeadersMap(xhr) {
+function createResponseHeaders(xhr) {
     const headers = xhr.getAllResponseHeaders();
     if ($isNothing(headers)) return;
 
-    const headerMap = new Map(),
+    const headerMap = {},
           lines     = headers.trim().split(/[\r\n]+/);
 
     lines.forEach(line => {
         const parts  = line.split(': '),
               header = parts.shift(),
               value  = parts.join(': ');
-        headerMap.set(header, value);
+        headerMap[header] = value;
     });
 
     return headerMap;

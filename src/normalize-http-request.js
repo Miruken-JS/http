@@ -4,22 +4,22 @@ import { TypeHelper } from "./type-helper";
 const DEFAULT_CONTENT_TYPE = "application/x-www-form-urlencoded";
 
 export function normalizeHttpRequest(request, composer, next) {
-    const { headers, resource } = request;
+    const { headers = {}, resource } = request;
     
-    if (!$isNothing(headers)) {
-        if (!headers.has("Accept")) {
-            headers.set("Accept", "application/json, text/plain, */*");
-        }
-        if ($isNothing(resource)) {
-            headers.delete("Content-Type");
-        } else if ($isNothing(resource.contentType)) {
-            request.contentType = headers.get("Content-Type");
-        }
+    if ($isNothing(headers["Accept"])) {
+        headers["Accept"] = "application/json, text/plain, */*";
+    }
+    if ($isNothing(resource)) {
+        delete headers["Content-Type"];
+    } else if ($isNothing(resource.contentType)) {
+        request.contentType = headers["Content-Type"];
     }
 
     if (!$isNothing(resource) && $isNothing(resource.contentType)) {
         request.contentType = inferContentType(resource);
     }
+    
+    request.headers = headers;
     
     return next();
 }

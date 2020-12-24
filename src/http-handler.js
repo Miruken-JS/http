@@ -74,8 +74,7 @@ function send(o, verb, request, response, options, composer) {
                   || DEFAULT_PIPELINE;
     try {
         return pipeline.reduceRight((next, pipe) =>
-            c => pipe(request, c, cc => next(cc || c)),
-            c => {
+            c => pipe(request, c, cc => next(cc || c)), c => {
                 const url = o.createUrl(request, options, c);
                 return o.sendRequest(verb, url, request, response, options, c);
             })(composer);

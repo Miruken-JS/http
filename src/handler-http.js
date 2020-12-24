@@ -10,6 +10,8 @@ import {
     PatchRequest, DeleteRequest 
 } from "./http-requests";
 
+import "./http-options";
+
 Handler.implement({
     $httpGet(uri, configure) {
         const get = new GetRequest();

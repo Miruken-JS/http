@@ -1,9 +1,11 @@
 import { 
-    HandlerBuilder, UnderscoreMapping
+    HandlerBuilder, underscoreNaming
 } from "miruken-callback";
 
 import { HttpError } from "../../src/http-error";
 import "../../src/xhr/handler-builder-xhr";
+import "../../src/handler-authorize";
+
 import * as dummy from "../dummy-api";
 
 import { expect } from "chai";
@@ -16,11 +18,11 @@ describe("XMLHttpRequestHandler", () => {
         handler = new HandlerBuilder()
             .withXMLHttpRequestClient()
             .build()
-            .$httpOptions({
-                baseUrl: DummyApi,
-                mapping: new UnderscoreMapping()
-            });
-        await Promise.delay(50);
+            .$mapOptions({
+                strategy: new (@underscoreNaming class {})
+            })
+            .$httpOptions({ baseUrl: DummyApi });
+        await Promise.delay(100);
     });
 
     it("should perform http get all", async () => {
@@ -39,6 +41,8 @@ describe("XMLHttpRequestHandler", () => {
         })).resource;
         expect(response).to.be.instanceOf(dummy.DummyResult);
         expect(response.data).to.be.instanceOf(dummy.EmployeeReadData);
+        expect(response.data.employeeName).to.be.a("string").that.is.not.empty;
+        expect(response.data.employeeSalary).to.be.a("number").that.is.gt(0);
         expect(response.data.id).to.equal(1);
     });
 
@@ -93,11 +97,25 @@ describe("XMLHttpRequestHandler", () => {
         expect(create).to.be.instanceOf(dummy.DummyResult);
         expect(create.data.id).to.be.greaterThan(0);
 
+        await Promise.delay(100);
+        
         const updateAge = new dummy.EmployeeWriteData().extend({
             age: 39
         });
         const update = (await handler.$httpPut(`update/${create.data.id}`, updateAge, {
             responseType: dummy.DummyResult.of(dummy.EmployeeReadData)
         })).resource;
+    });
+
+    it.skip("should perform http basic authorization", async () => {
+        const response = (await handler
+            .$httpBasic("csmith", "12345")
+            .$httpGet("employees", {
+                responseType: dummy.DummyResult.ofMany(dummy.EmployeeReadData)
+            })).resource;
+        expect(response).to.be.instanceOf(dummy.DummyResult);
+        for (const employee of response.data) {
+            expect(employee).to.be.instanceOf(dummy.EmployeeReadData);
+        }
     });
 });
