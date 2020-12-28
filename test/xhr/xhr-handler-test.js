@@ -12,7 +12,7 @@ import { expect } from "chai";
 
 const DummyApi = "http://dummy.restapiexample.com/api/v1/";
 
-describe("XMLHttpRequestHandler", () => {
+describe.skip("XMLHttpRequestHandler", () => {
     let handler;
     beforeEach(async () => {
         handler = new HandlerBuilder()

@@ -1,5 +1,5 @@
 import { 
-    $isNothing, $isObject, $isPlainObject
+    $isNothing, $isObject, $isString, $isPlainObject
 } from "miruken-core";
 
 import { 
@@ -25,33 +25,37 @@ export class XMLHttpRequestHandler extends HttpHandler {
 
         const promise = new Promise((resolve, reject) => {
             xhr.onload = () => {
-                const { status, statusText } = xhr,
-                        contentType = xhr.getResponseHeader("Content-Type"),
-                        content     = getResponse(xhr, contentType);
-                if (status >= 200 && status < 300) {
-                    if (!($isNothing(content) || $isNothing(contentType) ||
-                          xhr.responseType !== "")) {
-                        response.resource = composer.$mapTo(
-                            content, contentType, responseType);
-                    } else {
-                        response.resource = content;
-                    }
-                    response.headers     = createResponseHeaders(xhr);
-                    response.resourceUri = xhr.responseURL;
-                    resolve(response);
-                } else {
-                    let error;
-                    if (!($isNothing(content) || $isNothing(contentType))) {
-                        const errorContent = composer.$bestEffort()
-                            .$mapTo(content, contentType) || content;
-                        if (errorContent instanceof Error) {
-                            error = errorContent;
+                try {
+                    const { status, statusText } = xhr,
+                            contentType = xhr.getResponseHeader("Content-Type"),
+                            content     = getResponse(xhr, contentType);
+                    if (status >= 200 && status < 300) {
+                        if (!($isNothing(content) || $isNothing(contentType) ||
+                            xhr.responseType !== "")) {
+                            response.resource = composer.$mapTo(
+                                content, contentType, responseType);
                         } else {
-                            error = new HttpError(status, statusText);
-                            error.content = errorContent;
+                            response.resource = content;
                         }
+                        response.headers     = createResponseHeaders(xhr);
+                        response.resourceUri = xhr.responseURL;
+                        resolve(response);
+                    } else {
+                        let error;
+                        if (!($isNothing(content) || $isNothing(contentType))) {
+                            const errorContent = composer.$bestEffort()
+                                .$mapTo(content, contentType) || content;
+                            if (errorContent instanceof Error) {
+                                error = errorContent;
+                            } else {
+                                error = new HttpError(status, statusText);
+                                error.content = errorContent;
+                            }
+                        }
+                        reject(error || new HttpError(status, statusText));
                     }
-                    reject(error || new HttpError(status, statusText));
+                } catch (error) {
+                    reject(error);
                 }
             };
 
@@ -92,7 +96,8 @@ export class XMLHttpRequestHandler extends HttpHandler {
 }
 
 function getBody(resource, json) {
-    if (resource instanceof Document ||
+    if ($isString(resource) ||
+        resource instanceof Document ||
         TypeHelper.isFormData(resource) ||
         TypeHelper.isArrayBuffer(resource) ||
         TypeHelper.isBlob(resource)) {

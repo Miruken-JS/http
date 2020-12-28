@@ -8,7 +8,7 @@ import { ValidationError } from "miruken-validate";
 import "../src/xhr/handler-builder-xhr";
 
 import { 
-    Player, GetPlayer, CreatePlayer,
+    Player, GetPlayer, CreatePlayer, RenderPlayer,
     PlayerResponse, PlayerCreated, PlayerUpdated
 } from "./test-api";
 
@@ -16,7 +16,7 @@ import { expect } from "chai";
 
 const TestApi = "https://localhost:5001/";
 
-describe.only("HttpRouter", () => {
+describe("HttpRouter", () => {
     let handler;
     beforeEach(async () => {
         handler = new HandlerBuilder()
@@ -146,6 +146,9 @@ describe.only("HttpRouter", () => {
                 expect.fail("Should have failed.")
             }).catch(error => {
                 expect(error).to.be.instanceOf(ValidationError);
+                expect(error.results.Player.Name.errors.server).to.eql([
+                    { message: "'Player. Name' must not be empty." }
+                ]);
             })
         );
         expect(results.length).to.equal(1);
@@ -154,5 +157,83 @@ describe.only("HttpRouter", () => {
         const [{ uri, responses }] = groups; 
         expect(uri).to.equal(TestApi);
         expect(responses.length).to.equal(1);
-    });       
+    });
+
+    it("should propagate multiple failures", async () => {
+        const results = await handler.$batch(batch => {
+            batch.send(new CreatePlayer(new Player())
+                    .routeTo(TestApi)).then(response => {
+                    expect.fail("Should have failed.")
+                }).catch(error => {
+                    expect(error).to.be.instanceOf(ValidationError);
+                    expect(error.results.Player.Name.errors.server).to.eql([
+                        { message: "'Player. Name' must not be empty." }
+                    ]);
+                });
+            batch.send(new CreatePlayer(new Player().extend({
+                    id:   3,
+                    name: "Sergio Ramos"
+                })).routeTo(TestApi)).then(response => {
+                    expect.fail("Should have failed.")
+                }).catch(error => {
+                    expect(error).to.be.instanceOf(ValidationError);
+                    expect(error.results.Player.Id.errors.server).to.eql([
+                        { message: "'Player. Id' must be equal to '0'." }
+                    ]);
+                });
+        });
+        expect(results.length).to.equal(1);
+        const [groups] = results;
+        expect(groups.length).to.equal(1);
+        const [{ uri, responses }] = groups; 
+        expect(uri).to.equal(TestApi);
+        expect(responses.length).to.equal(2);    
+    });
+
+    it("should propagate format errors", async () => {
+        try {
+            await handler.$httpPost(
+                TestApi + "process",
+                `{
+                    'payload': {
+                        '$type': 'Miruken.AspNetCore.Tests.CreatePlayer, Miruken.AspNetCore.Tests',
+                        'player': {
+                            'id':   'ABC',
+                            'name': 'Namee3c27ad6-b812-46c1-9b60-d99c9d3e7ba6',
+                                'person': {
+                                'dob': 'XYZ'
+                            }
+                        }
+                    }
+                }`);
+        } catch (error) {
+            const { payload } = error.content;
+            expect(payload).to.be.instanceOf(ValidationError);
+            expect(payload.results.payload.errors.server.length).to.equal(2);
+        }
+    });
+
+    it("should handle missing type good tatus", async () => {
+        try {
+            await handler
+                .send(new RenderPlayer(new Player())
+                .routeTo(TestApi + "no-type-good/"));
+        } catch (error) {
+            expect(error).to.be.instanceOf(TypeError);
+            expect(error.message).to.equal(
+                "The type with id 'Miruken.AspNetCore.Tests.SomeError, Miruken.AspNetCore.Tests' could not be resolved and no fallback type was provided.");
+        }
+    });
+
+    it("should handle missing type bad tatus", async () => {
+        try {
+            await handler
+                .send(new CreatePlayer(new Player())
+                .routeTo(TestApi + "no-type-bad/"));  
+        } catch (error) {
+            expect(error).to.be.instanceOf(TypeError);
+            expect(error.message).to.equal(
+                "The type with id 'Miruken.AspNetCore.Tests.SomeError, Miruken.AspNetCore.Tests' could not be resolved and no fallback type was provided.");
+        }
+    });
 });

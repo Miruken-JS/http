@@ -40,6 +40,16 @@ export class CreatePlayer extends Request {
     player;
 }
 
+@typeId("Miruken.AspNetCore.Tests.RenderPlayer, Miruken.AspNetCore.Tests")
+export class RenderPlayer extends Request {
+    constructor(player) {
+        super();
+        this.player = player;
+    }
+
+    player;
+}
+
 @typeId("Miruken.AspNetCore.Tests.PlayerCreated, Miruken.AspNetCore.Tests")
 export class PlayerCreated extends Message {
     constructor(player) {

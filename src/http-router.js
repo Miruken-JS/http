@@ -1,3 +1,5 @@
+import { $isNothing } from "miruken-core";
+
 import { 
     handles, provides, singleton,
     Routed, routes, response,
@@ -24,14 +26,19 @@ export class HttpRouter {
                 typeIdHandling: TypeIdHandling.Auto
             })
             .$httpPost(uri, new Message(message), {
-                baseUrl:      routed.route,
+                baseAddress:  routed.route,
                 contentType:  "application/json",
                 responseType: Message.of(response.get(message))
             })
             .then(response => response.resource?.payload)
             .catch(error => {
-                const { payload } = error.content;
-                if (payload instanceof Error) throw payload;
+                if (error instanceof HttpError) {
+                    const { payload } = error.content;
+                    if (!$isNothing(payload)) {
+                        if (payload instanceof Error) throw payload;
+                        throw new UnknownPayloadError(payload);
+                    }
+                }
                 throw error;
             });
     }
