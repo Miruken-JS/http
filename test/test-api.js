@@ -3,7 +3,7 @@ import {
 } from "miruken-core";
 
 import { 
-    Request, response, typeId 
+    Message, Request, response, typeId 
 } from "miruken-callback";
 
 export class Person extends Base {
@@ -17,6 +17,7 @@ export class Player extends Base {
     person;
 }
 
+@typeId("Miruken.AspNetCore.Tests.PlayerResponse, Miruken.AspNetCore.Tests")
 export class PlayerResponse {
     @design(Player)
     player;
@@ -31,6 +32,26 @@ export class GetPlayer extends Request {
 @response(PlayerResponse)
 @typeId("Miruken.AspNetCore.Tests.CreatePlayer, Miruken.AspNetCore.Tests")
 export class CreatePlayer extends Request {
+    constructor(player) {
+        super();
+        this.player = player;
+    }
+
+    player;
+}
+
+@typeId("Miruken.AspNetCore.Tests.PlayerCreated, Miruken.AspNetCore.Tests")
+export class PlayerCreated extends Message {
+    constructor(player) {
+        super();
+        this.player = player;
+    }
+
+    player;
+}
+
+@typeId("Miruken.AspNetCore.Tests.PlayerUpdated, Miruken.AspNetCore.Tests")
+export class PlayerUpdated extends Message {
     constructor(player) {
         super();
         this.player = player;

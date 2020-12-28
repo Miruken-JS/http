@@ -1,30 +1,37 @@
 ﻿import {
-    Handler, provides, singleton,
-    mapsTo, mapsFrom, format, typeId
+    Handler, provides, singleton, mapsTo,
+    mapsFrom, format, surrogate, typeId
 } from "miruken-callback";
 
-export const ErrorFormat = Symbol();
-
+@surrogate(Error)
 @typeId("Miruken.Http.ExceptionData, Miruken.Http")
 export class ErrorData {
+    constructor(message) {
+        this.message = message;
+    }
+
     exceptionType;
     message;
     source;
 };
 
-@format(ErrorFormat)
 @provides() @singleton()
 export class ErrorMapping extends Handler {
+    @format(Error)
     @mapsFrom(ErrorData)
     mapToError({ object }) {
-        return Error(object?.message || "Unknown Error");
+        const message = object?.message || "Unknown Error",
+              error   = new Error(message);
+        error.name = object?.name;
+        return error;
     }
 
+    @format(ErrorData)
     @mapsFrom(Error)
     mapToErrorData({ object }) {
-        return Object.assign(new ErrorData(), {
-            message: object?.message || "Unknown Error",
-            source:  object?.name
-        });
+        const message = object?.message || "Unknown Error",
+              errorData = new ErrorData(message);
+        errorData.name = object?.name;
+        return errorData;
     }
 }

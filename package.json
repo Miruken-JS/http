@@ -22,8 +22,9 @@
       "dist": "dist/amd"
     },
     "dependencies": {
-      "miruken-callback": "0.0.5-alpha.56",
-      "miruken-core": "0.0.5-alpha.42"
+      "miruken-callback": "0.0.5-alpha.60",
+      "miruken-core": "0.0.5-alpha.43",
+      "miruken-validate": "0.0.5-alpha.22"
     },
     "devDependencies": {
       "@jspm/core": "^1.1.1",

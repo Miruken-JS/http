@@ -1,5 +1,3 @@
-import { $isNothing } from "miruken-core";
-
 import { 
     handles, provides, singleton,
     Routed, routes, response,
@@ -9,7 +7,6 @@ import {
 import { Message } from "./message";
 import { HttpOptions } from "./http-options";
 import { HttpError } from "./http-error";
-import { ErrorFormat } from "./error-mapping";
 import { UnknownPayloadError } from "./unknown-payload-error";
 import "./handler-http";
 
@@ -33,14 +30,8 @@ export class HttpRouter {
             })
             .then(response => response.resource?.payload)
             .catch(error => {
-                if (error instanceof HttpError && !$isNothing(error.content)) {
-                    const { payload } = error.content;
-                    if (!$isNothing(payload)) {
-                        throw composer.$bestEffort()
-                            .$mapFrom(payload, ErrorFormat)
-                                || new UnknownPayloadError(payload);
-                    }
-                }
+                const { payload } = error.content;
+                if (payload instanceof Error) throw payload;
                 throw error;
             });
     }

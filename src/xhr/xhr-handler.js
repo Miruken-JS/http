@@ -40,12 +40,18 @@ export class XMLHttpRequestHandler extends HttpHandler {
                     response.resourceUri = xhr.responseURL;
                     resolve(response);
                 } else {
-                    const error = new HttpError(status, statusText);
+                    let error;
                     if (!($isNothing(content) || $isNothing(contentType))) {
-                        error.content = composer.$bestEffort()
+                        const errorContent = composer.$bestEffort()
                             .$mapTo(content, contentType) || content;
+                        if (errorContent instanceof Error) {
+                            error = errorContent;
+                        } else {
+                            error = new HttpError(status, statusText);
+                            error.content = errorContent;
+                        }
                     }
-                    reject(error);
+                    reject(error || new HttpError(status, statusText));
                 }
             };
 

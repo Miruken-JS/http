@@ -97,8 +97,6 @@ describe("XMLHttpRequestHandler", () => {
         expect(create).to.be.instanceOf(dummy.DummyResult);
         expect(create.data.id).to.be.greaterThan(0);
 
-        await Promise.delay(100);
-        
         const updateAge = new dummy.EmployeeWriteData().extend({
             age: 39
         });
