@@ -1,9 +1,7 @@
 import { 
-    $isFunction, $isNothing, $isString,
-    $isPlainObject
+    Handler, $isFunction, $isNothing,
+    $isString, $isPlainObject
 } from "miruken-core";
-
-import { Handler } from "miruken-callback";
 
 import { 
     GetRequest, PutRequest, PostRequest,

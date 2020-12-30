@@ -1,5 +1,5 @@
 import { 
-    $isNothing handles, provides, singleton,
+    $isNothing, handles, provides, singleton,
     Routed, routes, response, TypeIdHandling
 } from "miruken-core";
 

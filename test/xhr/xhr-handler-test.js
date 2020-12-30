@@ -1,10 +1,7 @@
-import { 
-    HandlerBuilder, underscoreNaming
-} from "miruken-callback";
-
-import { HttpError } from "../../src/http-error";
-import "../../src/xhr/handler-builder-xhr";
-import "../../src/handler-authorize";
+import { HandlerBuilder, underscoreNaming } from "miruken-core";
+import { HttpError } from "@/http-error";
+import "@/xhr/handler-builder-xhr";
+import "@/handler-authorize";
 
 import * as dummy from "../dummy-api";
 

@@ -1,10 +1,6 @@
 import { 
-    Base, design
+    Base, design, Message, Request, response, typeId 
 } from "miruken-core";
-
-import { 
-    Message, Request, response, typeId 
-} from "miruken-callback";
 
 export class Person extends Base {
     dob;

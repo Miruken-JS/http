@@ -1,10 +1,7 @@
 import { 
+    Handler, handles, options,
     $isNothing, $isFunction, $classOf
 } from "miruken-core";
-
-import { 
-    Handler, handles, options
-} from "miruken-callback";
 
 import {
     GetRequest,    GetResponse,

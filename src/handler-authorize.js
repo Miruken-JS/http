@@ -1,5 +1,4 @@
-import { $isFunction, $isPromise } from "miruken-core";
-import { Handler } from "miruken-callback";
+import { Handler, $isFunction, $isPromise } from "miruken-core";
 
 Handler.implement({
     $httpBasic(username, password) {

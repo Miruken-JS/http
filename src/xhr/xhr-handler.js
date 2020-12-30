@@ -1,10 +1,7 @@
 import { 
+    provides, singleton, TimeoutError, RejectedError,
     $isNothing, $isObject, $isString, $isPlainObject
 } from "miruken-core";
-
-import { 
-    provides, singleton, TimeoutError, RejectedError
-} from "miruken-callback";
 
 import { HttpHandler } from "../http-handler";
 import { HttpError } from "../http-error";

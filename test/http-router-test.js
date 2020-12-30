@@ -1,11 +1,10 @@
 import { 
-    HandlerBuilder, Request, typeId,
-    NotHandledError
-} from "miruken-callback";
+    HandlerBuilder, Request, typeId, NotHandledError
+} from "miruken-core";
 
 import { ValidationError } from "miruken-validate";
 
-import "../src/xhr/handler-builder-xhr";
+import "@/xhr/handler-builder-xhr";
 
 import { 
     Player, GetPlayer, CreatePlayer, RenderPlayer,
