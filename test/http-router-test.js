@@ -15,7 +15,7 @@ import { expect } from "chai";
 
 const TestApi = "https://localhost:5001/";
 
-describe("HttpRouter", () => {
+describe.skip("HttpRouter", () => {
     let handler;
     beforeEach(async () => {
         handler = new HandlerBuilder()
