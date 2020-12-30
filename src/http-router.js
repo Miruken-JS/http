@@ -1,6 +1,6 @@
 import { 
-    $isNothing, handles, provides, singleton,
-    Routed, routes, response, TypeIdHandling
+    $isNothing, handles, provides,
+    singleton, Routed, routes, TypeIdHandling
 } from "miruken-core";
 
 import { HttpError } from "./http-error";

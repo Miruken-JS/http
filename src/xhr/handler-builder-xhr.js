@@ -1,8 +1,8 @@
 import { HandlerBuilder, JsonMapping } from "miruken-core";
-import { HttpRouter } from "../http-router";
+import { HttpRouter } from "@/http-router";
 import { XMLHttpRequestHandler } from "./xhr-handler";
-import { ErrorMapping } from "../error-mapping";
-import "../../src/handler-http";
+import { ErrorMapping } from "@/error-mapping";
+import "@/handler-http";
 
 HandlerBuilder.implement({
     withXMLHttpRequestClient() {

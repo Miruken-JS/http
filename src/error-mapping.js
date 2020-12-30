@@ -1,5 +1,5 @@
 ﻿import {
-    Handler, provides, singleton, mapsTo,
+    Handler, provides, singleton,
     mapsFrom, formats, surrogate, typeId
 } from "miruken-core";
 
