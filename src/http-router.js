@@ -1,14 +1,10 @@
-import { $isNothing } from "miruken-core";
-
 import { 
-    handles, provides, singleton,
-    Routed, routes, response,
-    TypeIdHandling
-} from "miruken-callback";
+    $isNothing handles, provides, singleton,
+    Routed, routes, response, TypeIdHandling
+} from "miruken-core";
 
-import { Message } from "./message";
-import { HttpOptions } from "./http-options";
 import { HttpError } from "./http-error";
+import { HttpOptions } from "./http-options";
 import { UnknownPayloadError } from "./unknown-payload-error";
 import "./handler-http";
 
@@ -18,17 +14,16 @@ export class HttpRouter {
     @routes("http", "https")
     route(routed, { rawCallback, composer }) {
         const { message } = routed,
-                uri = getResourceUri(routed, rawCallback);
+                uri = rawCallback?.isMany === true ? "publish" : "process"
 
         return composer
             .$enableFilters()
             .$mapOptions({
                 typeIdHandling: TypeIdHandling.Auto
             })
-            .$httpPost(uri, new Message(message), {
+            .$httpPost(uri, { payload: message }, {
                 baseAddress:  routed.route,
-                contentType:  "application/json",
-                responseType: Message.of(response.get(message))
+                contentType:  "application/json"
             })
             .then(response => response.resource?.payload)
             .catch(error => {
@@ -42,8 +37,4 @@ export class HttpRouter {
                 throw error;
             });
     }
-}
-
-function getResourceUri(routed, rawCallback) {
-    return rawCallback?.isMany === true ? "publish" : "process";
 }
