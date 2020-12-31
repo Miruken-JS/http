@@ -1,5 +1,5 @@
 {
-  "name": "miruken-http",
+  "name": "@miruken/http",
   "version": "0.0.4",
   "registry": "npm",
   "description": "Provides http and signalR integrations",
@@ -10,20 +10,22 @@
   "homepage": "http://miruken.com",
   "license": "MIT",
   "author": "Craig Neuwirt <Craig.Neuwirt@Improving.com>",
-  "main": "dist/cjs/miruken-http.js",
+  "main": "dist/cjs/@miruken/http.js",
+  "module": "dist/es/@miruken/http.js",
   "repository": {
     "type": "git",
     "url": "http://github.com/miruken/http"
   },
   "jspm": {
-    "main": "miruken-http",
+    "main": "http.js",
     "format": "amd",
     "directories": {
-      "dist": "dist/amd"
+      "dist": "dist/amd/@miruken"
     },
     "dependencies": {
-      "miruken-core": "0.0.5-alpha.44",
-      "miruken-validate": "0.0.5-alpha.23"
+      "@microsoft/signalr": "^5.0.1",
+      "@miruken/core": "0.0.5-alpha.47",
+      "@miruken/validate": "^0.0.5-alpha.24"
     },
     "devDependencies": {
       "@jspm/core": "^1.1.1",

@@ -1,4 +1,4 @@
-import { Request, $classOf, assignID } from "miruken-core";
+import { Request, $classOf, assignID } from "@miruken/core";
 
 export class ResourceWrapper extends Request {
     constructor(resource) {

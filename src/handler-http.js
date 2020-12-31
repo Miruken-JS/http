@@ -1,7 +1,7 @@
 import { 
     Handler, $isFunction, $isNothing,
     $isString, $isPlainObject
-} from "miruken-core";
+} from "@miruken/core";
 
 import { 
     GetRequest, PutRequest, PostRequest,

@@ -1,4 +1,4 @@
-import { $isNothing, $isObject } from "miruken-core";
+import { $isNothing, $isObject } from "@miruken/core";
 import { TypeHelper } from "./type-helper";
 
 const DEFAULT_CONTENT_TYPE = "application/x-www-form-urlencoded";

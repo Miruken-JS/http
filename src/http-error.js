@@ -1,4 +1,4 @@
-import { $isNumber } from "miruken-core";
+import { $isNumber } from "@miruken/core";
 
 export class HttpError extends Error {
     constructor(statusCode, message, inner) {

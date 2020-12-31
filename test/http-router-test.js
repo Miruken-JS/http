@@ -1,8 +1,8 @@
 import { 
     HandlerBuilder, Request, typeId, NotHandledError
-} from "miruken-core";
+} from "@miruken/core";
 
-import { ValidationError } from "miruken-validate";
+import { ValidationError } from "@miruken/validate";
 
 import "@/xhr/handler-builder-xhr";
 

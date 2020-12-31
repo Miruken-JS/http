@@ -1,7 +1,7 @@
 import { 
     provides, singleton, TimeoutError, RejectedError,
     $isNothing, $isObject, $isString, $isPlainObject
-} from "miruken-core";
+} from "@miruken/core";
 
 import { HttpHandler } from "../http-handler";
 import { HttpError } from "../http-error";
@@ -16,6 +16,7 @@ export class XMLHttpRequestHandler extends HttpHandler {
 
         xhr.timeout         = timeout;
         xhr.withCredentials = withCredentials;
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
         xhr.open(verb, url.href);
         
         setResponseType(xhr, responseType);
@@ -86,6 +87,15 @@ export class XMLHttpRequestHandler extends HttpHandler {
                 xhr.setRequestHeader(header, headers[header])
             );
         }
+
+        const optionHeaders = options?.headers;
+        if (!$isNothing(optionHeaders)) {
+            Reflect.ownKeys(optionHeaders).forEach(header => {
+                if (!headers?.hasOwnProperty(header)) {
+                    xhr.setRequestHeader(header, optionHeaders[header]);
+                }
+            });
+        };
 
         xhr.send(body);
         return promise;

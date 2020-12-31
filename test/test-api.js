@@ -1,6 +1,6 @@
 import { 
     Base, design, Message, Request, response, typeId 
-} from "miruken-core";
+} from "@miruken/core";
 
 export class Person extends Base {
     dob;
@@ -14,7 +14,12 @@ export class Player extends Base {
 }
 
 @typeId("Miruken.AspNetCore.Tests.PlayerResponse, Miruken.AspNetCore.Tests")
-export class PlayerResponse {
+export class PlayerResponse extends Message {
+    constructor(player) {
+        super();
+        this.player = player;
+    }
+
     @design(Player)
     player;
 }

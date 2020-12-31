@@ -1,4 +1,4 @@
-import { HandlerBuilder, underscoreNaming } from "miruken-core";
+import { HandlerBuilder, underscoreNaming } from "@miruken/core";
 import { HttpError } from "@/http-error";
 import "@/xhr/handler-builder-xhr";
 import "@/handler-authorize";

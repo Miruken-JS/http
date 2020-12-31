@@ -1,4 +1,4 @@
-import { Base, design } from "miruken-core";
+import { Base, design } from "@miruken/core";
 
 export class EmployeeReadData extends Base {
     id;
