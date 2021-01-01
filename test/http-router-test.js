@@ -20,7 +20,6 @@ describe.skip("HttpRouter", () => {
     beforeEach(async () => {
         handler = new HandlerBuilder()
             .withXMLHttpRequestClient()
-            .withValidation()
             .build()
             .$httpOptions({ 
                 baseUrl: TestApi

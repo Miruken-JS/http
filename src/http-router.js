@@ -28,7 +28,7 @@ export class HttpRouter {
             .then(response => response.resource?.payload)
             .catch(error => {
                 if (error instanceof HttpError) {
-                    const { payload } = error.content;
+                    const payload = error.content?.payload;
                     if (!$isNothing(payload)) {
                         if (payload instanceof Error) throw payload;
                         throw new UnknownPayloadError(payload);

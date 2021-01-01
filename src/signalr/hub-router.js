@@ -1,5 +1,5 @@
 import { 
-    $isNothing, handles, provides,
+    Try, $isNothing, handles, provides,
     singleton, Routed, routes, options,
     TypeIdHandling, JsonFormat, createKey
 } from "@miruken/core";
@@ -8,16 +8,14 @@ import { HttpOptions } from "../http-options";
 import { HubOptions } from "./hub-options";
 
 import { 
-    HubConnect, HubDisconnect,
+    HubConnectionInfo, HubConnect, HubDisconnect,
     HubReconnecting, HubReconnected, HubClosed
 } from "./hub-requests";
 
 import { UnknownPayloadError } from "../unknown-payload-error";
 import "./handler-hub";
 
-import { 
-    HubConnectionBuilder, HubConnectionInfo, HubConnectionState,
-} from "@microsoft/signalr";
+import * as signalR from "@microsoft/signalr";
 
 const _ = createKey();
 
@@ -34,8 +32,8 @@ export class HubRouter {
         @options(HttpOptions) httpOptions,
         { rawCallback, composer }) {
 
-        const baseUrl = hubOptions?.baseUrl || httpOptions?.baseUrl,
-              url     = new URL(routed.route.substring(4), baseUrl).href;
+        const hub = routed.route.substring(4),
+              url = getHubEndpoint(hub, hubOptions, httpOptions);
 
         const mapper = composer.$enableFilters().$mapOptions({
             typeIdHandling: TypeIdHandling.Auto
@@ -51,8 +49,14 @@ export class HubRouter {
             await connection.send("Publish", content);
         } else {
             const result   = await connection.invoke("Process", content),
-                  response = mapper.$mapTo(result, JsonFormat);
-            return response?.payload;
+                  response = mapper.$mapTo(result, JsonFormat, Try);
+            return response?.fold(failure => {
+                const { payload } = failure;
+                if (payload instanceof Error) {
+                    throw payload;
+                }
+                throw new UnknownPayloadError(payload);
+            }, success => success.payload);
         }
     }
 
@@ -61,14 +65,27 @@ export class HubRouter {
         @options(HubOptions)  hubOptions,
         @options(HttpOptions) httpOptions,
         { composer }) {
+        const url = getHubEndpoint(connect.url, hubOptions, httpOptions);
         const connection = await getConnection.call(
-            this, connect.url, hubOptions, httpOptions, composer, connect);
-        return getConnectionInfo(connection, connect.url);
+            this, url, hubOptions, httpOptions, composer, connect);
+        return getConnectionInfo(connection, url);
     }
 
     @handles(HubDisconnect)
-    async disconnect(disconnect) {
-        await disconnect.call(this, disconnect.url);
+    async disconnect(disconnect,
+        @options(HubOptions)  hubOptions,
+        @options(HttpOptions) httpOptions) {
+        const url = getHubEndpoint(disconnect.url, hubOptions, httpOptions);
+        await disconnectHub.call(this, url);
+    }
+}
+
+function getHubEndpoint(url, hubOptions, httpOptions) {
+    const baseUrl = hubOptions?.baseUrl || httpOptions?.baseUrl;
+    try {
+        return new URL(url, baseUrl).href;
+    } catch {
+        return url;  // relative url ???
     }
 }
 
@@ -81,21 +98,29 @@ async function getConnection(url, hubOptions, httpOptions, composer, connect) {
     let   connection  = connections.get(url);
 
     if (!$isNothing(connection) &&
-         connection.state != HubConnectionState.Disconnected) {
+         connection.state != signalR.HubConnectionState.Disconnected) {
         if (!$isNothing(connect)) {
             throw new Error(`A connection to the Hub @ ${url} already exists.`);
         }
         return connection;
     }
 
-    await disconnect.call(this, url);
+    await disconnectHub.call(this, url);
 
-    let builder = new HubConnectionBuilder().withUrl(url);
-    if (!$isNothing(hubOptions?.protocol)) {
-        builder = builder.withHubProtocol(hubOptions.protocol);
+    let builder = new signalR.HubConnectionBuilder().withUrl(url);
+
+    const protocol           = hubOptions?.protocol,
+          automaticReconnect = hubOptions?.automaticReconnect;
+          
+    if (!$isNothing(protocol)) {
+        builder = builder.withHubProtocol(protocol);
     }
-    if (!$isNothing(hubOptions?.automaticReconnect)) {
-        builder = builder.withAutomaticReconnect(hubOptions.automaticReconnect);
+    if (!$isNothing(automaticReconnect)) {
+        if (automaticReconnect === true) {
+            builder = builder.withAutomaticReconnect();
+        } else if (automaticReconnect !== false) {
+            builder = builder.withAutomaticReconnect(automaticReconnect);
+        }
     }
     if (!$isNothing(httpOptions)) {
         builder.httpConnectionOptions = { 
@@ -112,14 +137,14 @@ async function getConnection(url, hubOptions, httpOptions, composer, connect) {
         connection.keepAliveIntervalInMilliseconds = hubOptions.keepAliveIntervalInMilliseconds;
     }
 
-    const mapper = composer.$mapOptions({ typeIdHandling: TypeIdHandling.Auto }),
+    const connectionInfo = getConnectionInfo(connection, url),
+          mapper = composer.$mapOptions({ typeIdHandling: TypeIdHandling.Auto }),
           notify = composer.$notify();
 
     connection.onclose(async error => {
-        const closed = new HubClosed(getConnectionInfo(connection, url), error);
-        notify.send(closed);
+        notify.send(new HubClosed(connectionInfo, error));
         if ($isNothing(error)) {
-            await disconnect.call(this, url);
+            await disconnectHub.call(this, url);
         } else {
             await connectWithInitialRetry.call(this, connection, url);
         }
@@ -127,14 +152,14 @@ async function getConnection(url, hubOptions, httpOptions, composer, connect) {
 
     connection.on("Process", message => {
         const { payload } = mapper.$mapTo(message, JsonFormat);
-        composer.$with(getConnectionInfo(connection, url))
+        composer.$with(connectionInfo)
                 .$with(connection)
                 .send(payload);
     });
 
     connection.on("Publish", message => {
         const { payload } = mapper.$mapTo(message, JsonFormat);
-        composer.$with(getConnectionInfo(connection, url))
+        composer.$with(connectionInfo)
                 .$with(connection)
                 .publish(payload);
     });
@@ -142,11 +167,11 @@ async function getConnection(url, hubOptions, httpOptions, composer, connect) {
     await connectWithInitialRetry.call(this, connection, url);
 
     connection.onreconnecting(error => notify.send(
-        new HubReconnecting(getConnectionInfo(connection, url), error)
+        new HubReconnecting(connectionInfo, error)
     ));
 
     connection.onreconnected(connectionId => notify.send(
-        new HubReconnected(getConnectionInfo(connection, connectionId), error)
+        new HubReconnected(connectionInfo, error)
     ));
 
     connections.set(url, connection);
@@ -160,7 +185,7 @@ async function connectWithInitialRetry(connection, url) {
             await connection.start();
             return;
         } catch (error) {
-            if (Date.now() - start > 30000) {
+            if (Date.now() - start > 10000) {
                 throw new Error(`Unable to connect to the Hub at ${url}: ${error.message}`);
             }
             await Promise.delay(5000);
@@ -168,12 +193,18 @@ async function connectWithInitialRetry(connection, url) {
     }
 }
 
-async function disconnect(url) {
+async function disconnectHub(url) {
     if ($isNothing(url))
         throw new Error("The url argument is required.");
 
-    const connection =  _(this).connections.get(url);
+    const connections = _(this).connections,
+          connection  = connections.get(url);
     if (!$isNothing(connection)) {
-        await connection.stop();
+        connections.delete(url);
+        try {
+            await connection.stop();
+        } catch {
+            // ignore
+        }
     }
 }

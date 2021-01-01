@@ -16,9 +16,9 @@ export class XMLHttpRequestHandler extends HttpHandler {
 
         xhr.timeout         = timeout;
         xhr.withCredentials = withCredentials;
-        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
         xhr.open(verb, url.href);
-        
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
         setResponseType(xhr, responseType);
 
         const promise = new Promise((resolve, reject) => {
@@ -137,7 +137,7 @@ function getResponse(xhr, contentType) {
     let response = xhr.responseXML;
     if (!$isNothing(response)) return response;
     response = xhr.response;
-    if (!$isNothing(response)) {
+    if (response) {
         return JSON.parse(response);
     }
 }
