@@ -33,17 +33,17 @@ gulp.task("rollup", function(done) {
         var moduleTypes = ["amd", "cjs", "es", "iife", "system", "umd"];
         moduleTypes.forEach(function(moduleType){
             var name   = paths.packageName;
-            var output = paths.output + moduleType + '/'; 
+            var output = paths.output + moduleType + '/' + jsName;
             if (moduleType === "iife") {
                 name = name.replace('@', '').replace('/', '-');
             }            
             bundle.write({
-                file:   output + jsName,
+                file:   output,
                 format: moduleType,
                 name:   camelCase(name)
             });
-             gulp.src(['./package.json', './README.md'])
-                .pipe(gulp.dest(output));            
+            gulp.src(['./package.json', './README.md'])
+                .pipe(gulp.dest(path.dirname(output)));            
         }); 
         console.log('Build complete');
     })
