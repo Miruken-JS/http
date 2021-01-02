@@ -2,10 +2,11 @@
   "name": "@miruken/http",
   "version": "0.0.4",
   "registry": "npm",
-  "description": "Provides http and signalR integrations",
+  "description": "Miruken Http Integrations",
   "keywords": [
     "miruken",
-    "http"
+    "http",
+    "signlaR"
   ],
   "homepage": "http://miruken.com",
   "license": "MIT",
