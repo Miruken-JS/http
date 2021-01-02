@@ -155,8 +155,8 @@ describe.skip("HubRouter", () => {
     });
 
     it("should batch publications", async () => {
-        const player1 = new Player().extend({ name: "Paul Pogba" }),
-              player2 = new Player().extend({ name: "Eden Hazard" }),
+        const player1 = new Player().extend({ id: 11, name: "Paul Pogba" }),
+              player2 = new Player().extend({ id: 12, name: "Eden Hazard" }),
               results = await handler.$batch(batch => {
             batch.publish(new PlayerCreated(player1).routeTo(TestApiHub));
             batch.publish(new PlayerUpdated(player2).routeTo(TestApiHub));
