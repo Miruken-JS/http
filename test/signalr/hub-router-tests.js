@@ -17,7 +17,7 @@ import { expect } from "chai";
 const TestApi    = "https://localhost:5001/",
       TestApiHub = "hub:hub/miruken";
 
-describe.skip("HubRouter", () => {
+describe("HubRouter", () => {
     let handler;
     beforeEach(async () => {
         handler = new HandlerBuilder()
@@ -42,7 +42,7 @@ describe.skip("HubRouter", () => {
             name: "Philippe Coutinho"
         });
         const response = await handler
-                .send(new CreatePlayer(player)
+                .$send(new CreatePlayer(player)
                 .routeTo(TestApiHub));
         expect(response).to.be.instanceOf(PlayerResponse);
         expect(response.player.name).to.equal("Philippe Coutinho");
@@ -54,7 +54,7 @@ describe.skip("HubRouter", () => {
             name: "Lionel Messi"
         });
         const response = await handler
-                .send(new CreatePlayer(player)
+                .$send(new CreatePlayer(player)
                 .routeTo(`hub:${TestApi}hub/miruken`));
         expect(response).to.be.instanceOf(PlayerResponse);
         expect(response.player.name).to.equal("Lionel Messi");
@@ -66,13 +66,13 @@ describe.skip("HubRouter", () => {
             id:   8,
             name: "Philippe Coutinho"
         });
-        await handler.publish(new PlayerCreated(player)
+        await handler.$publish(new PlayerCreated(player)
                      .routeTo(TestApiHub));
     });
 
     it.skip("should reject invalid hub", async () => {
         try {
-            await handler.send(new CreatePlayer().routeTo("hub://localhost:9000"));     
+            await handler.$send(new CreatePlayer().routeTo("hub://localhost:9000"));     
             expect.fail("Should have failed");                 
         } catch (error) {
             expect(error.message).to.equal(
@@ -86,7 +86,7 @@ describe.skip("HubRouter", () => {
             playerId;
         }
         try {
-            await handler.send(new PromotePlayer(1).routeTo(TestApiHub));
+            await handler.$send(new PromotePlayer(1).routeTo(TestApiHub));
         } catch (error) {
             expect(error.message).to.match(
                 /An unexpected error occurred invoking 'Process' on the server. JsonSerializationException: Error resolving type specified in JSON 'Miruken.AspNetCore.Tests.PromotePlayer,Miruken.AspNetCore.Tests'. Path '[$]type'/
@@ -97,7 +97,7 @@ describe.skip("HubRouter", () => {
     it("should batch single request", async () => {
         const player  = new Player().extend({ name: "Paul Pogba" }),
               results = await handler.$batch(batch =>
-            batch.send(new CreatePlayer(player)
+            batch.$send(new CreatePlayer(player)
                     .routeTo(TestApiHub)).then(response => {
                 expect(response.player.name).to.equal("Paul Pogba");
                 expect(response.player.id).to.be.gt(0);
@@ -119,12 +119,12 @@ describe.skip("HubRouter", () => {
         const player1 = new Player().extend({ name: "Paul Pogba" }),
               player2 = new Player().extend({ name: "Eden Hazard" }),
               results = await handler.$batch(batch => {
-            batch.send(new CreatePlayer(player1)
+            batch.$send(new CreatePlayer(player1)
                  .routeTo(TestApiHub)).then(response => {
                      expect(response.player.name).to.equal("Paul Pogba");
                      expect(response.player.id).to.be.gt(0);
                  });
-            batch.send(new CreatePlayer(player2)
+            batch.$send(new CreatePlayer(player2)
                  .routeTo(TestApiHub)).then(response => {
                      expect(response.player.name).to.equal("Eden Hazard");
                      expect(response.player.id).to.be.gt(0);
@@ -142,11 +142,11 @@ describe.skip("HubRouter", () => {
         const player1 = new Player().extend({ name: "Paul Pogba" }),
               player2 = new Player().extend({ name: "Eden Hazard" }),
               results = await handler.$batch(async batch => {
-            const response = await batch.send(
+            const response = await batch.$send(
                 new CreatePlayer(player1).routeTo(TestApiHub));
             expect(response.player.name).to.equal("Paul Pogba");
             expect(response.player.id).to.be.gt(0);
-            await batch.send(new CreatePlayer(player2)
+            await batch.$send(new CreatePlayer(player2)
                  .routeTo(TestApiHub)).then(response => {
                      expect(response.player.name).to.equal("Eden Hazard");
                      expect(response.player.id).to.be.gt(0);
@@ -158,8 +158,8 @@ describe.skip("HubRouter", () => {
         const player1 = new Player().extend({ id: 11, name: "Paul Pogba" }),
               player2 = new Player().extend({ id: 12, name: "Eden Hazard" }),
               results = await handler.$batch(batch => {
-            batch.publish(new PlayerCreated(player1).routeTo(TestApiHub));
-            batch.publish(new PlayerUpdated(player2).routeTo(TestApiHub));
+            batch.$publish(new PlayerCreated(player1).routeTo(TestApiHub));
+            batch.$publish(new PlayerUpdated(player2).routeTo(TestApiHub));
         });
         expect(results.length).to.equal(1);
         const [groups] = results;
@@ -171,7 +171,7 @@ describe.skip("HubRouter", () => {
 
     it("should propagate failure", async () => {
         const results = await handler.$batch(batch =>
-            batch.send(new CreatePlayer(new Player())
+            batch.$send(new CreatePlayer(new Player())
                     .routeTo(TestApiHub)).then(response => {
                 expect.fail("Should have failed.")
             }).catch(error => {
@@ -191,7 +191,7 @@ describe.skip("HubRouter", () => {
 
     it("should propagate multiple failures", async () => {
         const results = await handler.$batch(batch => {
-            batch.send(new CreatePlayer(new Player())
+            batch.$send(new CreatePlayer(new Player())
                     .routeTo(TestApiHub)).then(response => {
                     expect.fail("Should have failed.")
                 }).catch(error => {
@@ -200,7 +200,7 @@ describe.skip("HubRouter", () => {
                         { message: "'Player. Name' must not be empty." }
                     ]);
                 });
-            batch.send(new CreatePlayer(new Player().extend({
+            batch.$send(new CreatePlayer(new Player().extend({
                     id:   3,
                     name: "Sergio Ramos"
                 })).routeTo(TestApiHub)).then(response => {

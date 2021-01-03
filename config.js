@@ -10,8 +10,8 @@ System.config({
     "@": "src",
     "@jspm/core": "npm:@jspm/core@1.1.1",
     "@microsoft/signalr": "npm:@microsoft/signalr@5.0.1",
-    "@miruken/core": "npm:@miruken/core@0.0.5-alpha.47",
-    "@miruken/validate": "npm:@miruken/validate@0.0.5-alpha.24",
+    "@miruken/core": "npm:@miruken/core@0.0.5-alpha.49",
+    "@miruken/validate": "npm:@miruken/validate@0.0.5-alpha.25",
     "chai": "npm:chai@4.2.0",
     "http": "src",
     "github:jspm/nodelibs-assert@0.1.0": {
@@ -83,11 +83,11 @@ System.config({
       "process": "github:jspm/nodelibs-process@0.1.2",
       "ws": "npm:ws@6.2.1"
     },
-    "npm:@miruken/core@0.0.5-alpha.47": {
+    "npm:@miruken/core@0.0.5-alpha.49": {
       "reflect-metadata": "npm:reflect-metadata@0.1.13"
     },
-    "npm:@miruken/validate@0.0.5-alpha.24": {
-      "@miruken/core": "npm:@miruken/core@0.0.5-alpha.47",
+    "npm:@miruken/validate@0.0.5-alpha.25": {
+      "@miruken/core": "npm:@miruken/core@0.0.5-alpha.49",
       "validate.js": "npm:validate.js@0.13.1"
     },
     "npm:abort-controller@3.0.0": {

@@ -25,8 +25,8 @@
     },
     "dependencies": {
       "@microsoft/signalr": "^5.0.1",
-      "@miruken/core": "0.0.5-alpha.47",
-      "@miruken/validate": "^0.0.5-alpha.24"
+      "@miruken/core": "^0.0.5-alpha.49",
+      "@miruken/validate": "^0.0.5-alpha.25"
     },
     "devDependencies": {
       "@jspm/core": "^1.1.1",

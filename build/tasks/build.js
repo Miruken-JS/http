@@ -43,7 +43,7 @@ gulp.task("rollup", function(done) {
                 name:   camelCase(name)
             });
             gulp.src(['./package.json', './README.md'])
-                .pipe(gulp.dest(path.dirname(output)));            
+                .pipe(gulp.dest(path.dirname(output)));
         }); 
         console.log('Build complete');
     })

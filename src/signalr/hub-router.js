@@ -106,11 +106,15 @@ async function getConnection(url, hubOptions, httpOptions, composer, connect) {
     }
 
     await disconnectHub.call(this, url);
+    
+    const { protocol, transports, automaticReconnect,
+            serverTimeoutInMilliseconds, keepAliveIntervalInMilliseconds } =
+               hubOptions || {};
 
-    let builder = new signalR.HubConnectionBuilder().withUrl(url);
+    let builder = new signalR.HubConnectionBuilder();
 
-    const protocol           = hubOptions?.protocol,
-          automaticReconnect = hubOptions?.automaticReconnect;
+    builder = $isNothing(transports) ? builder.withUrl(url)
+            : builder.withUrl(url, transports);
           
     if (!$isNothing(protocol)) {
         builder = builder.withHubProtocol(protocol);
@@ -130,11 +134,11 @@ async function getConnection(url, hubOptions, httpOptions, composer, connect) {
 
     connection = builder.build();
 
-    if (!$isNothing(hubOptions?.serverTimeoutInMilliseconds)) {
-        connection.serverTimeoutInMilliseconds = hubOptions.serverTimeoutInMilliseconds;
+    if (!$isNothing(serverTimeoutInMilliseconds)) {
+        connection.serverTimeoutInMilliseconds = serverTimeoutInMilliseconds;
     }
-    if (!$isNothing(hubOptions?.keepAliveIntervalInMilliseconds)) {
-        connection.keepAliveIntervalInMilliseconds = hubOptions.keepAliveIntervalInMilliseconds;
+    if (!$isNothing(keepAliveIntervalInMilliseconds)) {
+        connection.keepAliveIntervalInMilliseconds = keepAliveIntervalInMilliseconds;
     }
 
     const connectionInfo = getConnectionInfo(connection, url),
@@ -142,7 +146,7 @@ async function getConnection(url, hubOptions, httpOptions, composer, connect) {
           notify = composer.$notify();
 
     connection.onclose(async error => {
-        notify.send(new HubClosed(connectionInfo, error));
+        notify.$send(new HubClosed(connectionInfo, error));
         if ($isNothing(error)) {
             await disconnectHub.call(this, url);
         } else {
@@ -154,24 +158,24 @@ async function getConnection(url, hubOptions, httpOptions, composer, connect) {
         const { payload } = mapper.$mapTo(message, JsonFormat);
         composer.$with(connectionInfo)
                 .$with(connection)
-                .send(payload);
+                .$send(payload);
     });
 
     connection.on("Publish", message => {
         const { payload } = mapper.$mapTo(message, JsonFormat);
         composer.$with(connectionInfo)
                 .$with(connection)
-                .publish(payload);
+                .$publish(payload);
     });
 
     await connectWithInitialRetry.call(this, connection, url);
 
-    connection.onreconnecting(error => notify.send(
+    connection.onreconnecting(error => notify.$send(
         new HubReconnecting(connectionInfo, error)
     ));
 
-    connection.onreconnected(connectionId => notify.send(
-        new HubReconnected(connectionInfo, error)
+    connection.onreconnected(connectionId => notify.$send(
+        new HubReconnected(connectionInfo, connectionId)
     ));
 
     connections.set(url, connection);

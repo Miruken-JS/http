@@ -4,6 +4,7 @@ import { Options, handlesOptions } from "@miruken/core";
 export class HubOptions extends Options {
     baseUrl;
     protocol;
+    transports;
     automaticReconnect;
     serverTimeoutInMilliseconds;
     keepAliveIntervalInMilliseconds;

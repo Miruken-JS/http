@@ -3,9 +3,9 @@ import { HubConnect, HubDisconnect } from "./hub-requests";
 
 Handler.implement({
     $hubConnect(url) {
-        return this.send(new HubConnect(url));
+        return this.$send(new HubConnect(url));
     },
     $hubDisconnect(url) {
-        return this.send(new HubDisconnect(url));
+        return this.$send(new HubDisconnect(url));
     },
 });

@@ -14,27 +14,27 @@ Handler.implement({
     $httpGet(uri, configure) {
         const get = new GetRequest();
         configureRequest(uri, get, null, configure);
-        return this.send(get);
+        return this.$send(get);
     },
     $httpPut(uri, resource, configure) {
         const put = new PutRequest();
         configureRequest(uri, put, resource, configure);
-        return this.send(put);
+        return this.$send(put);
     },
     $httpPost(uri, resource, configure) {
         const post = new PostRequest();
         configureRequest(uri, post, resource, configure);
-        return this.send(post);
+        return this.$send(post);
     },
     $httpPatch(uri, resource, configure) {
         const patch = new PatchRequest();
         configureRequest(uri, patch, resource, configure);
-        return this.send(patch);
+        return this.$send(patch);
     },
     $httpDelete(uri, configure) {
         const remove = new DeleteRequest();
         configureRequest(uri, remove, resource, configure);
-        return this.send(remove);
+        return this.$send(remove);
     }         
 });
 

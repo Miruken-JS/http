@@ -31,7 +31,7 @@ describe.skip("HttpRouter", () => {
             name: "Philippe Coutinho"
         });
         const response = await handler
-                .send(new CreatePlayer(player)
+                .$send(new CreatePlayer(player)
                 .routeTo(TestApi));
         expect(response).to.be.instanceOf(PlayerResponse);
         expect(response.player.name).to.equal("Philippe Coutinho");
@@ -44,7 +44,7 @@ describe.skip("HttpRouter", () => {
             playerId;
         }
         try {
-            await handler.send(new PromotePlayer(1).routeTo(TestApi));
+            await handler.$send(new PromotePlayer(1).routeTo(TestApi));
         } catch (error) {
             expect(error).to.be.instanceOf(ValidationError);
             expect(error.results.payload.$type.payload.errors.server).to.eql([
@@ -55,7 +55,7 @@ describe.skip("HttpRouter", () => {
 
     it("should reject invalid route", async () => {
         try {
-            await handler.send(new CreatePlayer().routeTo("abc://localhost:9000"));     
+            await handler.$send(new CreatePlayer().routeTo("abc://localhost:9000"));     
             expect.fail("Should have failed");                 
         } catch (error) {
             expect(error).to.be.instanceOf(NotHandledError);
@@ -65,7 +65,7 @@ describe.skip("HttpRouter", () => {
     it("should batch single request", async () => {
         const player  = new Player().extend({ name: "Paul Pogba" }),
               results = await handler.$batch(batch =>
-            batch.send(new CreatePlayer(player)
+            batch.$send(new CreatePlayer(player)
                     .routeTo(TestApi)).then(response => {
                 expect(response.player.name).to.equal("Paul Pogba");
                 expect(response.player.id).to.be.gt(0);
@@ -87,12 +87,12 @@ describe.skip("HttpRouter", () => {
         const player1 = new Player().extend({ name: "Paul Pogba" }),
               player2 = new Player().extend({ name: "Eden Hazard" }),
               results = await handler.$batch(batch => {
-            batch.send(new CreatePlayer(player1)
+            batch.$send(new CreatePlayer(player1)
                  .routeTo(TestApi)).then(response => {
                      expect(response.player.name).to.equal("Paul Pogba");
                      expect(response.player.id).to.be.gt(0);
                  });
-            batch.send(new CreatePlayer(player2)
+            batch.$send(new CreatePlayer(player2)
                  .routeTo(TestApi)).then(response => {
                      expect(response.player.name).to.equal("Eden Hazard");
                      expect(response.player.id).to.be.gt(0);
@@ -110,11 +110,11 @@ describe.skip("HttpRouter", () => {
         const player1 = new Player().extend({ name: "Paul Pogba" }),
               player2 = new Player().extend({ name: "Eden Hazard" }),
               results = await handler.$batch(async batch => {
-            const response = await batch.send(
+            const response = await batch.$send(
                 new CreatePlayer(player1).routeTo(TestApi));
             expect(response.player.name).to.equal("Paul Pogba");
             expect(response.player.id).to.be.gt(0);
-            await batch.send(new CreatePlayer(player2)
+            await batch.$send(new CreatePlayer(player2)
                  .routeTo(TestApi)).then(response => {
                      expect(response.player.name).to.equal("Eden Hazard");
                      expect(response.player.id).to.be.gt(0);
@@ -126,8 +126,8 @@ describe.skip("HttpRouter", () => {
         const player1 = new Player().extend({ name: "Paul Pogba" }),
               player2 = new Player().extend({ name: "Eden Hazard" }),
               results = await handler.$batch(batch => {
-            batch.publish(new PlayerCreated(player1).routeTo(TestApi));
-            batch.publish(new PlayerUpdated(player2).routeTo(TestApi));
+            batch.$publish(new PlayerCreated(player1).routeTo(TestApi));
+            batch.$publish(new PlayerUpdated(player2).routeTo(TestApi));
         });
         expect(results.length).to.equal(1);
         const [groups] = results;
@@ -139,7 +139,7 @@ describe.skip("HttpRouter", () => {
 
     it("should propagate failure", async () => {
         const results = await handler.$batch(batch =>
-            batch.send(new CreatePlayer(new Player())
+            batch.$send(new CreatePlayer(new Player())
                     .routeTo(TestApi)).then(response => {
                 expect.fail("Should have failed.")
             }).catch(error => {
@@ -159,7 +159,7 @@ describe.skip("HttpRouter", () => {
 
     it("should propagate multiple failures", async () => {
         const results = await handler.$batch(batch => {
-            batch.send(new CreatePlayer(new Player())
+            batch.$send(new CreatePlayer(new Player())
                     .routeTo(TestApi)).then(response => {
                     expect.fail("Should have failed.")
                 }).catch(error => {
@@ -168,7 +168,7 @@ describe.skip("HttpRouter", () => {
                         { message: "'Player. Name' must not be empty." }
                     ]);
                 });
-            batch.send(new CreatePlayer(new Player().extend({
+            batch.$send(new CreatePlayer(new Player().extend({
                     id:   3,
                     name: "Sergio Ramos"
                 })).routeTo(TestApi)).then(response => {
@@ -214,7 +214,7 @@ describe.skip("HttpRouter", () => {
     it("should handle missing type good tatus", async () => {
         try {
             await handler
-                .send(new RenderPlayer(new Player())
+                .$send(new RenderPlayer(new Player())
                 .routeTo(TestApi + "no-type-good/"));
         } catch (error) {
             expect(error).to.be.instanceOf(TypeError);
@@ -226,7 +226,7 @@ describe.skip("HttpRouter", () => {
     it("should handle missing type bad tatus", async () => {
         try {
             await handler
-                .send(new CreatePlayer(new Player())
+                .$send(new CreatePlayer(new Player())
                 .routeTo(TestApi + "no-type-bad/"));  
         } catch (error) {
             expect(error).to.be.instanceOf(TypeError);
