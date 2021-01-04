@@ -17,7 +17,7 @@ import { expect } from "chai";
 const TestApi    = "https://localhost:5001/",
       TestApiHub = "hub:hub/miruken";
 
-describe.skip("HubRouter", () => {
+describe("HubRouter", () => {
     let handler;
     beforeEach(async () => {
         handler = new HandlerBuilder()
@@ -91,6 +91,19 @@ describe.skip("HubRouter", () => {
             expect(error.message).to.match(
                 /An unexpected error occurred invoking 'Process' on the server. JsonSerializationException: Error resolving type specified in JSON 'Miruken.AspNetCore.Tests.PromotePlayer,Miruken.AspNetCore.Tests'. Path '[$]type'/
             );
+        }
+    });
+
+    it("should receive exceptions", async () => {
+        try {
+            await handler
+                .$send(new CreatePlayer(new Player())
+                .routeTo(TestApiHub));
+        } catch(error) {
+            expect(error).to.be.instanceOf(ValidationError);
+            expect(error.results.Player.Name.errors.server).to.eql([
+                { message: "'Player. Name' must not be empty." }
+            ]);
         }
     });
 
