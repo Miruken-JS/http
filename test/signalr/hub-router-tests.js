@@ -17,7 +17,7 @@ import { expect } from "chai";
 const TestApi    = "https://localhost:5001/",
       TestApiHub = "hub:hub/miruken";
 
-describe("HubRouter", () => {
+describe.skip("HubRouter", () => {
     let handler;
     beforeEach(async () => {
         handler = new HandlerBuilder()
