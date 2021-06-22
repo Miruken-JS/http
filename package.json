@@ -25,8 +25,11 @@
     },
     "dependencies": {
       "@microsoft/signalr": "^5.0.1",
-      "@miruken/core": "^2.0.0",
-      "@miruken/validate": "^2.0.0"
+      "@miruken/core": "^2.0.1",
+      "@miruken/core@2.0.1": "@miruken/core@2.0.1",
+      "@miruken/validate": "^2.0.0",
+      "@miruken/validate@2.0.2": "@miruken/validate@2.0.2",
+      "@miruken/validate@2.0.2-alpha.1": "@miruken/validate@2.0.2-alpha.1"
     },
     "devDependencies": {
       "@jspm/core": "^1.1.1",
@@ -76,5 +79,6 @@
   },
   "resolutions": {
     "graceful-fs": "4.2.3"
-  }
+  },
+  "dependencies": {}
 }

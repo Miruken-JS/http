@@ -94,8 +94,8 @@ function getConnectionInfo(connection, url) {
 }
 
 async function getConnection(url, hubOptions, httpOptions, composer, connect) {
-    const connections = _(this).connections;
-    let   connection  = connections.get(url);
+    const { connections } = _(this);
+    let connection = connections.get(url);
 
     if (!$isNothing(connection) &&
          connection.state != signalR.HubConnectionState.Disconnected) {
@@ -192,7 +192,7 @@ async function connectWithInitialRetry(connection, url) {
             if (Date.now() - start > 10000) {
                 throw new Error(`Unable to connect to the Hub at ${url}: ${error.message}`);
             }
-            await Promise.delay(5000);
+            await Promise.delay(2500);
         }
     }
 }
@@ -201,8 +201,8 @@ async function disconnectHub(url) {
     if ($isNothing(url))
         throw new Error("The url argument is required.");
 
-    const connections = _(this).connections,
-          connection  = connections.get(url);
+    const { connections } = _(this),
+            connection    = connections.get(url);
     if (!$isNothing(connection)) {
         connections.delete(url);
         try {
